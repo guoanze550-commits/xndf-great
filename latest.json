@@ -5,10 +5,10 @@
   "run_attempt": "1",
   "source_commit": "4d565081e0149c84a910d3bfbba26a5bee3b227c",
   "run_url": "https://github.com/guoanze550-commits/xndf-great/actions/runs/39406157991",
-  "state": "running",
-  "recorded_at": "2026-10-20T10:11:33.468Z",
-  "build_result": "pending",
-  "deploy_result": "pending",
-  "live_validation": "not-run",
-  "page_url": null
+  "state": "completed",
+  "recorded_at": "2026-10-20T10:20:25.206Z",
+  "build_result": "success",
+  "deploy_result": "success",
+  "live_validation": "success",
+  "page_url": "https://guoanze550-commits.github.io/xndf-great/"
 }
