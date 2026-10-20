@@ -1,14 +1,14 @@
 {
   "format": "permitted-world-web-deploy-v1",
   "repository": "guoanze550-commits/xndf-great",
-  "run_id": "39404692207",
+  "run_id": "39406157991",
   "run_attempt": "1",
-  "source_commit": "adb61b48a518e29dc048406d2edb6c470a3c5e56",
-  "run_url": "https://github.com/guoanze550-commits/xndf-great/actions/runs/39404692207",
-  "state": "completed",
-  "recorded_at": "2026-10-20T10:09:59.631Z",
-  "build_result": "success",
-  "deploy_result": "failure",
-  "live_validation": "failure",
-  "page_url": "https://guoanze550-commits.github.io/xndf-great/"
+  "source_commit": "4d565081e0149c84a910d3bfbba26a5bee3b227c",
+  "run_url": "https://github.com/guoanze550-commits/xndf-great/actions/runs/39406157991",
+  "state": "running",
+  "recorded_at": "2026-10-20T10:11:33.468Z",
+  "build_result": "pending",
+  "deploy_result": "pending",
+  "live_validation": "not-run",
+  "page_url": null
 }
