@@ -73,7 +73,10 @@ jobs:
 
           This prerelease does not merge PR #1 or change main. The HTTPS preview is delivered separately after Pages deployment succeeds.
           EOF
-          gh release create v3.0-classroom --repo "$REPOSITORY" --target "$SOURCE_SHA" --prerelease --title "界限 V3.0 · Apple Silicon Mac 课堂版" --notes-file release-notes.md The-Permitted-World-0.3.0-classroom-macOS-Apple-Silicon-arm64.zip classroom-verification.json SHA256SUMS.txt
+          # The owner-authorized connection creates the prerelease/tag first.
+          # GITHUB_TOKEN only uploads assets to that existing release.
+          test "$(gh api "repos/$REPOSITORY/releases/tags/v3.0-classroom" --jq .target_commitish)" = "$SOURCE_SHA"
+          gh release upload v3.0-classroom --repo "$REPOSITORY" The-Permitted-World-0.3.0-classroom-macOS-Apple-Silicon-arm64.zip classroom-verification.json SHA256SUMS.txt
       - name: Report nonsecret publication error
         if: failure()
         run: |
