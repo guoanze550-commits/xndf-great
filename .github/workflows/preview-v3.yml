@@ -23,8 +23,6 @@ jobs:
     permissions:
       contents: read
       actions: read
-    outputs:
-      may_deploy: ${{ steps.policy.outputs.allowed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,23 +60,9 @@ jobs:
           path: preview-download/
           retention-days: 30
           if-no-files-found: error
-      - name: Check the existing Pages deployment rule without changing it
-        id: policy
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          let allowed=false;
-          try {
-            const response=await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/environments/github-pages/deployment-branch-policies`,{headers:{Accept:'application/vnd.github+json',Authorization:`Bearer ${process.env.GH_TOKEN}`}});
-            if(response.ok){const data=await response.json();allowed=data.branch_policies?.some(p=>p.name==='feature/v3-continuous-adventure')||false;}
-          }catch(error){console.warn('Cannot read deployment policy:',error.message);}
-          fs.appendFileSync(process.env.GITHUB_OUTPUT,`allowed=${allowed}\n`);
-          if(!allowed)console.log('Hosted preview skipped: owner must explicitly allow feature/v3-continuous-adventure in Settings > Environments > github-pages > Deployment branches. The downloadable web preview is ready. Re-run this workflow after the rule is added.');
-          JS
-      - name: Preserve main V2.2 alongside the optional hosted preview
-        if: steps.policy.outputs.allowed == 'true'
+      # The github-pages environment enforces its allowed branch policy.
+      # Do not use a metadata API check: GITHUB_TOKEN may not read that policy.
+      - name: Preserve main V2.2 alongside the independent hosted preview
         run: |
           v3_stable_dir=$(mktemp -d "$RUNNER_TEMP/permitted-v22.XXXXXX")
           v3_main_sha=$(git rev-parse origin/main)
@@ -90,12 +74,10 @@ jobs:
           cp -a dist-preview/. site/preview/v3/
           touch site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
-        if: steps.policy.outputs.allowed == 'true'
         with:
           path: site
   deploy:
     needs: build
-    if: needs.build.outputs.may_deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
