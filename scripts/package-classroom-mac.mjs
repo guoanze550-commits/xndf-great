@@ -50,6 +50,7 @@ try {
   await copyFile("docs/CLASSROOM.md", path.join(folder, "课堂使用说明.md"));
   await copyFile("docs/V2.md", path.join(folder, "V2.md"));
   await copyFile("docs/V2.2.md", path.join(folder, "V2.2.md"));
+  await copyFile("docs/V3.md", path.join(folder, "V3.md"));
   await copyFile("LICENSE", path.join(folder, "LICENSE.txt"));
   await cp("third-party", path.join(folder, "third-party"), {
     recursive: true,

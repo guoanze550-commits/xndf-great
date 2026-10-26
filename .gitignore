@@ -13,3 +13,6 @@ dist-web/
 release-classroom/
 
 public/build-info.json
+
+dist-preview/
+site/

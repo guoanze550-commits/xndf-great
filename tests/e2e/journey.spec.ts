@@ -105,14 +105,11 @@ test("mouse completes the entire offline world, even after camera denial", async
     expect(await monitor.evaluate(m=>m.seen.modes)).toContain("TRAVERSAL_PULLBACK");
     await monitor.evaluate(m=>m.observer.disconnect());await monitor.dispose();
   }
-  await expect(page.locator("#ending")).toBeVisible({ timeout: 40000 });
-  await expect(page.locator("#app")).toHaveAttribute("data-platform", "C");
-  await page.screenshot({ path: "test-results/04-ending.png" });
-  await expect.poll(async () => (await music()).state, {timeout:10000}).toBe("ended");
-  expect((await music()).activeSources).toBe(0);
-  await page.locator("#again").click();
+  await expect(page.locator("#app")).toHaveAttribute("data-chapter","2",{timeout:30000});
+  await expect(page.locator("#ending")).toBeHidden();
+  expect((await music()).starts).toBe(1);
+  await page.locator("#restart").click();
   await expect.poll(async () => (await music()).starts).toBe(2);
-  expect((await music()).position).toBeLessThan(4);
   await expect(page.locator("#app")).toHaveAttribute("data-platform", "A");
   await expect(page.locator("#app")).toHaveAttribute("data-route", "none");
   expect(errors).toEqual([]);

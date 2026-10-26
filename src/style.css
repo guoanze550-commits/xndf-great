@@ -800,3 +800,18 @@ video {
 .music-volume { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); }
 .music-volume input { width: 62px; height: 16px; accent-color: var(--warm); cursor: pointer; }
 @media (max-width: 650px) { .music-volume { gap: 3px; } .music-volume input { width: 36px; } }
+
+/* V3 uses the same scene, typography and restrained winter palette. */
+.adventure-controls{position:fixed;right:5.5%;bottom:86px;width:min(440px,48vw);z-index:3;padding:20px 24px;background:linear-gradient(140deg,#0a1b27ec,#102b36c9);border:1px solid var(--line);backdrop-filter:blur(14px);}
+.adventure-heading{display:flex;justify-content:space-between;gap:12px;font:9px monospace;letter-spacing:1px;color:var(--muted);}
+.adventure-controls h2{font:20px "Songti SC",serif;letter-spacing:2px;margin:13px 0 8px;}
+.adventure-controls p{font-size:11px;line-height:1.9;color:#9bb0ba;margin:8px 0 12px;}
+.mechanism-row{display:flex;align-items:center;gap:14px;font-size:10px;}
+.mechanism-row input{flex:1;min-width:50px;}.mechanism-row output{font:11px monospace;width:38px;}
+.adventure-actions{display:flex;align-items:center;gap:9px;margin:12px 0;font-size:10px;}.adventure-actions .primary{font-size:11px;padding:11px 15px;margin:0;flex:1;}
+.movement-pad{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;}.movement-pad button{font-size:10px;padding:8px 10px;border:1px solid #9cb3bc30;}.movement-pad #jump{color:var(--warm);border-color:#c6a57270;}
+.adventure-help{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:12px;font-size:9px;color:var(--muted);}.adventure-help button{white-space:nowrap;color:var(--warm);}
+.bridge-timer{position:relative;font-size:10px;color:var(--warm);padding:8px 0;border-bottom:2px solid #a5ced72b;}.bridge-timer i{position:absolute;bottom:-2px;left:0;height:2px;background:#a7dce6;transition:width .1s linear;}
+.chapter-transition{position:fixed;inset:0;z-index:12;pointer-events:none;opacity:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at 64% 43%,#fff6dffb 0%,#e4d4baff 46%,#aebdc3ff 100%);color:#3f5058;}.chapter-transition h2{font:38px "Songti SC",serif;letter-spacing:12px;}.chapter-transition span{font:11px monospace;letter-spacing:6px;}.chapter-transition p{font-size:11px;letter-spacing:3px;}
+@media(max-width:900px){.adventure-controls{right:4%;width:48vw;padding:14px;bottom:70px;}.adventure-help span{display:none;}}
+@media(max-width:650px){.adventure-controls{width:88%;right:6%;bottom:62px;padding:12px 15px;}.adventure-controls h2{font-size:17px;margin:8px 0;}.adventure-controls p{font-size:10px;line-height:1.65;}.movement-pad button{font-size:9px;padding:7px;}.adventure-actions{margin:7px 0;}.chapter-transition h2{font-size:29px;}}

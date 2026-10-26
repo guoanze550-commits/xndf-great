@@ -1,3 +1,5 @@
+> **V3.0 开发分支：三重边界**。原第一关保留，新增断桥迷城与倒悬之境，三关自动连续，音乐跨关保持。[玩法、操作与验收](docs/V3.md)。main仍为V2.2，需通过PR审核后合并。
+
 > **V2.2：多层遗迹与连接镜头（包版本 0.2.2）**。保持原五次空间跨越，新增推近、连接停留、人物行走回拉与低动态选项。[V2.2 说明](docs/V2.2.md) · [本轮实际验收与交付状态](docs/V2.2-ACCEPTANCE.md)。上一稳定版已保留为 `v2.1-stable`。
 
 > **背景音乐接入**：保留游戏视觉与玩法，仅接入用户提供的探索音乐、本地 MP3、循环及持久音量设置。[接入与实际验收记录](docs/BACKGROUND-MUSIC.md)。
@@ -14,7 +16,7 @@
 
 **课堂请先看：[简洁中文使用说明](docs/CLASSROOM.md)**。展示步骤、网页入口、两个手势、鼠标备用和本地运行方式均在其中；[V2.2 验收记录](docs/V2.2-ACCEPTANCE.md)区分自动测试与真实设备验证。
 
-## 课堂 Mac ZIP
+## V2.2 课堂 Mac ZIP（历史已验证，本分支尚未构建 V3 Mac 包）
 
 [V2.2 Apple Silicon ZIP 下载](https://github.com/guoanze550-commits/xndf-great/actions/runs/39404692221/artifacts/12256654195)（[成功运行](https://github.com/guoanze550-commits/xndf-great/actions/runs/39404692221)）：本次 0.2.2 `.app`、签名/ZIP/资源校验，以及原生 Mac 屏蔽网络后的音乐解码、五段鼠标与镜头自动验证均已成功。登录 GitHub 下载并解开外层 Artifact ZIP，再解开内层课堂 ZIP；真实课堂设备首次安装和摄像头仍需验收。[下载说明与 SHA-256](docs/CLASSROOM-DOWNLOAD.md)。
 
