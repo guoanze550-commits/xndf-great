@@ -1,5 +1,6 @@
 // Tests the existing game with all HTTP(S)/WebSocket requests blocked.
 // Synthetic video checks local inference only, never actual camera hardware.
+import {traverseNewChapters} from "./traverse-new-chapters.mjs";
 import { _electron as electron, expect } from "@playwright/test";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -119,10 +120,12 @@ try {
     await expect(window.locator("#app")).toHaveAttribute("data-camera-mode","TRAVERSAL_PULLBACK",{timeout:6000});
     await expect(window.locator("#app")).toHaveAttribute("data-platform",node,{timeout:45000});
   }
+  const campaign=await traverseNewChapters(window);
   await expect(window.locator("#ending")).toBeVisible({timeout:20000});
   await expect(window.locator("#app")).toHaveAttribute("data-crossings","5");
   await expect.poll(async () => (await musicStatus()).state, {timeout:10000}).toBe("ended");
   expect((await musicStatus()).activeSources).toBe(0);
+  expect((await musicStatus()).starts).toBe(1);
   const blocked = await application.evaluate(
     () => globalThis.classroomBlockedRequests,
   );
@@ -141,7 +144,8 @@ try {
     network: "HTTP, HTTPS and WebSocket blocked before page reload",
     externalRequests: blocked.length,
     mouseJourney: "A→L→B→U→B2→C, five projection crossings, confirmation holds, cinematic pullbacks and ending passed",
-    explorationMusic: "local compressed track decoded, single source across five crossings, ending faded and stopped; no acoustic/device verification",
+    continuousAdventure: {completed:campaign.completed,entries:campaign.entries,transitionsFailed:campaign.transitionFailures},
+    explorationMusic: "local compressed track decoded, single source across all three chapters, ending faded and stopped; no acoustic/device verification",
     localModelInference: "synthetic video passed",
     physicalCamera: "not tested",
     physicalMac: "not tested by this automated check",

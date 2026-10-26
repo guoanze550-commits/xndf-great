@@ -1,0 +1,90 @@
+name: Publish existing classroom Mac ZIP
+on:
+  push:
+    branches: [feature/v3-continuous-adventure]
+    paths: [".github/workflows/publish-classroom-delivery.yml"]
+  workflow_dispatch:
+    inputs:
+      source_run:
+        description: Successful native classroom build run ID (no rebuild)
+        required: true
+        default: "40327759276"
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: publish-v3-classroom
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: ${{ inputs.source_run || '40327759276' }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Wait for native build and offline validation without rebuilding
+        id: source
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const repo=process.env.REPOSITORY,id=process.env.SOURCE_RUN;
+          if(!/^\d+$/.test(id))throw new Error('Invalid run ID');
+          const headers={Accept:'application/vnd.github+json',Authorization:`Bearer ${process.env.GH_TOKEN}`};
+          for(let attempt=0;attempt<60;attempt++){
+            const response=await fetch(`https://api.github.com/repos/${repo}/actions/runs/${id}`,{headers});
+            if(!response.ok)throw new Error(`Cannot read source run: ${response.status}`);
+            const run=await response.json();
+            if(run.path!=='.github/workflows/build-classroom-mac.yml'||run.head_branch!=='feature/v3-continuous-adventure')throw new Error('Not the expected V3 native build');
+            if(run.status==='completed'){
+              if(run.conclusion!=='success')throw new Error(`Native validation failed: ${run.conclusion}`);
+              fs.appendFileSync(process.env.GITHUB_OUTPUT,`sha=${run.head_sha}\nurl=${run.html_url}\n`);
+              break;
+            }
+            if(attempt===59)throw new Error('Native run still incomplete');
+            await new Promise(r=>setTimeout(r,30000));
+          }
+          JS
+      - uses: actions/download-artifact@v4
+        with:
+          name: The-Permitted-World-Classroom-Mac-Apple-Silicon-arm64
+          path: delivery
+          repository: ${{ github.repository }}
+          run-id: ${{ env.SOURCE_RUN }}
+          github-token: ${{ github.token }}
+      - name: Verify and publish the exact validated ZIP
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          SOURCE_URL: ${{ steps.source.outputs.url }}
+        run: |
+          exec > >(tee /tmp/classroom-publish.log) 2>&1
+          cd delivery
+          sha256sum -c SHA256SUMS.txt
+          unzip -tq The-Permitted-World-0.3.0-classroom-macOS-Apple-Silicon-arm64.zip
+          cat > release-notes.md <<EOF
+          V3.0 Apple Silicon Mac classroom preview, built from ${SOURCE_SHA}.
+
+          Download the ZIP, extract it and open The Permitted World.app. No Node.js or terminal is required. All music, MediaPipe and WASM resources are bundled locally.
+
+          Native ARM64, ad-hoc signature, resource checks and automated packaged three-chapter offline traversal passed in GitHub Actions: ${SOURCE_URL}
+
+          Real classroom Mac installation, real camera gestures, Safari, subjective audio/animation and performance remain manual checks. This app has no Developer ID signature or notarization. For a trusted download blocked by macOS, follow System Settings > Privacy & Security > Open Anyway if offered; do not disable system protection.
+
+          This prerelease does not merge PR #1 or change main. The HTTPS preview is delivered separately after Pages deployment succeeds.
+          EOF
+          # The owner-authorized connection creates the prerelease/tag first.
+          # GITHUB_TOKEN only uploads assets to that existing release.
+          test "$(gh api "repos/$REPOSITORY/releases/tags/v3.0-classroom" --jq .target_commitish)" = "$SOURCE_SHA"
+          gh release upload v3.0-classroom --repo "$REPOSITORY" The-Permitted-World-0.3.0-classroom-macOS-Apple-Silicon-arm64.zip classroom-verification.json SHA256SUMS.txt
+      - name: Report nonsecret publication error
+        if: failure()
+        run: |
+          python3 - <<'PYTHON'
+          import pathlib,re
+          p=pathlib.Path('/tmp/classroom-publish.log')
+          if p.exists():
+              s=p.read_text()[-4000:]
+              s=re.sub(r'gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+','[REDACTED]',s)
+              print('::error::'+s.replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+          PYTHON

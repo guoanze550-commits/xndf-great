@@ -1,0 +1,119 @@
+name: Preview V3 adventure (no desktop release)
+on:
+  push:
+    branches: [feature/v3-continuous-adventure]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "scripts/serve-v3-preview.cjs"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/preview-v3.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install unchanged dependencies and check game logic
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test
+      - name: Build V3 under its own preview subpath
+        run: |
+          npm run assets
+          npx --no-install vite build --outDir dist-preview --base=/xndf-great/preview/v3/
+          mkdir -p preview-download/game
+          cp -a dist-preview/. preview-download/game/
+          cp scripts/serve-v3-preview.cjs preview-download/serve-preview.cjs
+          cp docs/V3.md preview-download/V3.md
+          cat > preview-download/README.txt <<'TXT'
+          The Permitted World V3 web preview
+          Requires Node.js 24. No npm install is needed for this compiled preview.
+          Extract the complete ZIP, open a terminal in this folder, then run:
+            node serve-preview.cjs
+          Open the browser address printed in the terminal. Ctrl+C stops the server.
+          Controls: W/S move, Shift run, Space jump, Q view, R checkpoint retry.
+          Music, model and WASM are local. Safari/device/camera/FPS still need real-device checks.
+          TXT
+      - uses: actions/upload-artifact@v4
+        id: artifact
+        with:
+          name: The-Permitted-World-V3-Web-Preview
+          path: preview-download/
+          retention-days: 30
+          if-no-files-found: error
+      # The github-pages environment enforces its allowed branch policy.
+      # Do not use a metadata API check: GITHUB_TOKEN may not read that policy.
+      - name: Preserve main V2.2 alongside the independent hosted preview
+        run: |
+          v3_stable_dir=$(mktemp -d "$RUNNER_TEMP/permitted-v22.XXXXXX")
+          v3_main_sha=$(git rev-parse origin/main)
+          git archive origin/main | tar -x -C "$v3_stable_dir"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$v3_stable_dir/node_modules"
+          (cd "$v3_stable_dir" && GITHUB_SHA="$v3_main_sha" npm run build:web)
+          mkdir -p site/preview/v3
+          cp -a "$v3_stable_dir/dist-web/." site/
+          cp -a dist-preview/. site/preview/v3/
+          touch site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}preview/v3/
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment
+      - name: Verify both stable and preview HTTPS payloads
+        env:
+          GAME_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          node --input-type=module <<'JS'
+          import {createHash} from 'node:crypto';
+          const base=process.env.GAME_URL;
+          for(let attempt=0;attempt<8;attempt++){
+            try{
+              const stable=await (await fetch(new URL('build-info.json?preview='+process.env.GITHUB_SHA,base))).json();
+              const preview=new URL('preview/v3/',base);
+              const info=await (await fetch(new URL('build-info.json?rev='+process.env.GITHUB_SHA,preview))).json();
+              if(stable.version!=='0.2.2'||info.version!=='0.3.0'||info.source_commit!==process.env.GITHUB_SHA)throw new Error('Wrong stable/preview revision');
+              const page=await fetch(preview);if(!page.ok)throw new Error('Preview HTML unavailable');
+              const html=await page.text(),assets=[...html.matchAll(/(?:src|href)="([^"]+\/assets\/[^"]+)"/g)];
+              if(assets.length<2)throw new Error('Missing script/style');
+              for(const [,asset]of assets)if(!(await fetch(new URL(asset,preview))).ok)throw new Error('Missing preview asset');
+              const manifest=await (await fetch(new URL('audio/bgm_exploration.json',preview))).json();
+              const mp3=await fetch(new URL('audio/bgm_exploration.mp3',preview));
+              if(!mp3.ok||!/^audio\/(?:mpeg|mp3)(?:;|$)/i.test(mp3.headers.get('content-type')||''))throw new Error('Music unavailable');
+              if(createHash('sha256').update(Buffer.from(await mp3.arrayBuffer())).digest('hex')!==manifest.playback_sha256)throw new Error('Music checksum');
+              const model=await fetch(new URL('vision/hand_landmarker.task',preview));
+              if(!model.ok||createHash('sha256').update(Buffer.from(await model.arrayBuffer())).digest('hex')!=='94cae88157602cec45e48fe0c572b418a9641a9aae977ffd71dddbce167201a1')throw new Error('Model checksum');
+              console.log('Verified V2.2 root and V3 preview:',preview.href);process.exit(0);
+            }catch(error){console.warn(error.message);if(attempt===7)throw error;await new Promise(r=>setTimeout(r,10000));}
+          }
+          JS

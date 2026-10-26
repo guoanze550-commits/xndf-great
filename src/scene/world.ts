@@ -37,6 +37,10 @@ export class WinterWorld {
   body = new T.Group();
   legs: T.Group[] = [];
   arms: T.Group[] = [];
+  knees: T.Group[] = [];
+  ankles: T.Group[] = [];
+  elbows: T.Group[] = [];
+  private legacyRoot: T.Group | null = null;
   control = new T.Group();
   poles: T.Group[] = [];
   doorLight: T.PointLight;
@@ -156,6 +160,7 @@ export class WinterWorld {
       depthWrite: false,
     });
     const mirror = new Reflector(new T.PlaneGeometry(160,160), { color: 0x8ba2ac, textureWidth: 384, textureHeight: 384, clipBias: .003 });
+    mirror.name="water-reflection";
     const reflect = mirror.onBeforeRender.bind(mirror);
     mirror.onBeforeRender = (...args) => {
       if(this.reflectionFrame++ % this.reflectionEvery === 0) reflect(...args);
@@ -172,6 +177,7 @@ export class WinterWorld {
       new T.PlaneGeometry(180, 180, 64, 64),
       this.water,
     );
+    water.name="water-surface";
     water.renderOrder=2;
     water.rotation.x = -Math.PI / 2;
     water.position.y = -0.35;
@@ -607,7 +613,7 @@ export class WinterWorld {
   }
   private applyBalanced(balanced:boolean) {
     if(this.balanced===balanced) return;
-    this.balanced=balanced;this.bloom.enabled=!balanced;this.reflectionEvery=balanced?8:4;
+    this.balanced=balanced;this.bloom.enabled=!balanced;this.renderer.shadowMap.enabled=!balanced;this.reflectionEvery=balanced?8:4;
     this.snow.geometry.setDrawRange(0,balanced?1400:2100);
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,balanced?1.1:1.5));
     this.renderer.setSize(this.width,this.height);this.composer.setPixelRatio(this.renderer.getPixelRatio());this.composer.setSize(this.width,this.height);
@@ -648,16 +654,21 @@ export class WinterWorld {
       const leg = new T.Group();
       leg.position.set(x, -0.04, 0);
       this.body.add(leg);
-      this.box(0.11, 0.29, 0.13, coat, 0, -0.14, 0, leg);
-      this.box(0.12, 0.09, 0.22, boot, 0, -0.3, 0.035, leg);
+      this.box(0.11, 0.15, 0.13, coat, 0, -0.075, 0, leg);
+      const knee=new T.Group();knee.position.y=-.15;leg.add(knee);this.knees.push(knee);
+      this.box(0.11,0.14,0.13,coat,0,-.065,0,knee);
+      const ankle=new T.Group();ankle.position.y=-.15;knee.add(ankle);this.ankles.push(ankle);
+      this.box(0.12, 0.09, 0.22, boot, 0, 0, 0.035, ankle);
       this.legs.push(leg);
     }
     for (const x of [-0.23, 0.23]) {
       const arm = new T.Group();
       arm.position.set(x, 0.31, 0);
       this.body.add(arm);
-      this.box(0.11, 0.33, 0.13, coat, 0, -0.12, 0, arm);
-      this.box(0.09, 0.09, 0.1, boot, 0, -0.3, 0, arm);
+      this.box(0.11, 0.17, 0.13, coat, 0, -0.05, 0, arm);
+      const elbow=new T.Group();elbow.position.y=-.14;arm.add(elbow);this.elbows.push(elbow);
+      this.box(0.11,0.16,0.13,coat,0,-.075,0,elbow);
+      this.box(0.09, 0.09, 0.1, boot, 0, -0.16, 0, elbow);
       arm.rotation.z = x > 0 ? 0.12 : -0.12;
       this.arms.push(arm);
     }
@@ -689,7 +700,16 @@ export class WinterWorld {
     this.camera.bottom = -v;
     this.camera.updateProjectionMatrix();
   }
-  update(dt: number, r: WorldRules, started: boolean) {
+  setLegacyVisible(visible:boolean) {
+    if(!this.legacyRoot) {
+      this.legacyRoot=new T.Group();this.legacyRoot.name="v22-retained-architecture";
+      const keep=(o:T.Object3D)=>o===this.character||o===this.snow||o===this.crystals||o instanceof T.HemisphereLight||o instanceof T.DirectionalLight||o.name==="water-reflection"||o.name==="water-surface";
+      for(const child of [...this.scene.children])if(!keep(child))this.legacyRoot.add(child);
+      this.scene.add(this.legacyRoot);
+    }
+    this.legacyRoot.visible=visible;
+  }
+  update(dt: number, r: WorldRules, started: boolean, presentation?:()=>void) {
     this.time += dt;
     const now=performance.now();
     if(this.lastFrame) this.frameCost=T.MathUtils.lerp(this.frameCost,Math.min(300,now-this.lastFrame),.08);
@@ -820,6 +840,7 @@ export class WinterWorld {
     this.snow.geometry.attributes.position.needsUpdate = true;
     (this.field.material as T.LineBasicMaterial).opacity = 0.06 + field * 0.12;
     this.field.rotation.y = (r.config.axis * Math.PI) / 180;
+    presentation?.();
     this.renderer.info.reset();
     this.composer.render();
     this.frameMetrics={draws:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles};

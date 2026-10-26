@@ -1,3 +1,15 @@
+# V3.0 课堂体验补充
+
+本开发分支提供三关连续冒险，原V2.2说明保留在下方供第一关参考。
+
+V3.0 Mac课堂版直接下载：[Apple Silicon游戏ZIP](https://github.com/guoanze550-commits/xndf-great/releases/download/v3.0-classroom/The-Permitted-World-0.3.0-classroom-macOS-Apple-Silicon-arm64.zip)。下载、解压、打开 `.app`，无需Node.js或终端。默认交付规范见 [DELIVERY.md](DELIVERY.md)。预览入口、完整操作和展示解答见 [V3.md](V3.md)。
+
+第一关仍用鼠标调机关并确认；第二、三关用W/S移动、Shift奔跑、Space跳跃、Q切观察角度、R检查点重试，也可使用屏幕上的前进/奔跑/停止/跳跃按钮。两次切关自动发生，不需要点继续，背景音乐保持连续。只有第三关完成才显示最终结局。
+
+建议课前用演示电脑完整试玩三关，并检查摄像头、镜头舒适度和实际帧率。本轮不把云端软件渲染当作真实Mac或60FPS验收。
+
+---
+
 # 《界限》课堂使用说明
 
 **THE PERMITTED WORLD · 课堂主题作业**
